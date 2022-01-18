@@ -1,4 +1,4 @@
-module github.com/anayks/golang-avito-tech-test
+module github.com/anayks/golang-avito-trainee-tech-task
 
 go 1.17
 
