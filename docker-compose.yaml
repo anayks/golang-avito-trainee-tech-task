@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  test: 
+    build: ./
+    command: make run
+    ports:
+      - 9000:9000
+    depends_on:
+      - db
+    environment:
+      - DB_PASSWORD=HEYO
+
+  db:
+    restart: always
+    image: postgres:latest
+    container_name: db
+    volumes:
+      - ./.database/postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=HEYO
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - 5432:5432
