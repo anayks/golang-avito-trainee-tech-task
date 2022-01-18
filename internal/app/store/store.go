@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	ChatEntity "github.com/anayks/golang-avito-tech-test/internal/app/entity/chat"
-	ChatMessage "github.com/anayks/golang-avito-tech-test/internal/app/entity/message"
-	ChatUser "github.com/anayks/golang-avito-tech-test/internal/app/entity/user"
+	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
+	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
+	ChatUser "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/user"
 	_ "github.com/lib/pq"
 )
 

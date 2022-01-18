@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"regexp"
 
-	ChatEntity "github.com/anayks/golang-avito-tech-test/internal/app/entity/chat"
-	ChatMessage "github.com/anayks/golang-avito-tech-test/internal/app/entity/message"
-	user "github.com/anayks/golang-avito-tech-test/internal/app/entity/user"
+	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
+	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
+	user "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/user"
 )
 
 func (s *server) handleAddUser(rw http.ResponseWriter, r *http.Request) {

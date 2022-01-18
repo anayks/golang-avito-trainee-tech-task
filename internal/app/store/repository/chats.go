@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	ChatEntity "github.com/anayks/golang-avito-tech-test/internal/app/entity/chat"
-	ChatUser "github.com/anayks/golang-avito-tech-test/internal/app/entity/user"
+	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
+	ChatUser "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/user"
 	pq "github.com/lib/pq"
 )
 

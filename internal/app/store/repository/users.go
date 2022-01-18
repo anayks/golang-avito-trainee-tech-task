@@ -3,7 +3,7 @@ package sqlstore
 import (
 	"fmt"
 
-	ChatUser "github.com/anayks/golang-avito-tech-test/internal/app/entity/user"
+	ChatUser "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/user"
 )
 
 type RepositoryUsers struct {

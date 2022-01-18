@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
-	db "github.com/anayks/golang-avito-tech-test/internal/app/store"
-	store "github.com/anayks/golang-avito-tech-test/internal/app/store/repository"
+	db "github.com/anayks/golang-avito-trainee-tech-task/internal/app/store"
+	store "github.com/anayks/golang-avito-trainee-tech-task/internal/app/store/repository"
 )
 
 type ctxKey int8

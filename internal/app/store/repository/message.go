@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	ChatEntity "github.com/anayks/golang-avito-tech-test/internal/app/entity/chat"
-	ChatMessage "github.com/anayks/golang-avito-tech-test/internal/app/entity/message"
+	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
+	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
 )
 
 type RepositoryMessages struct {

@@ -3,7 +3,7 @@ package ChatEntity
 import (
 	"time"
 
-	ChatMessage "github.com/anayks/golang-avito-tech-test/internal/app/entity/message"
+	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
 )
 
 type Chat struct {
