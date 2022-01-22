@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
 
 	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
 	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
@@ -20,14 +19,19 @@ func (s *server) handleAddUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matched, _ := regexp.Match(`^[a-zA-Z0-9а-яА-Я_]{4,20}$`, []byte(parsedUser.Username))
-
-	if !matched {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("invalid username characters. Actually: %s", parsedUser.Username))
+	if err := parsedUser.ValidateUserName(); err != nil {
+		s.ErrorLog(r, err)
+		s.error(rw, r, http.StatusBadRequest, err)
 		return
 	}
 
-	id := s.store.Users().Create(parsedUser)
+	id, err := s.store.Users().Create(parsedUser)
+
+	if err != nil {
+		s.ErrorLog(r, err)
+		s.error(rw, r, http.StatusBadRequest, err)
+		return
+	}
 
 	fmt.Fprint(rw, id)
 }
@@ -40,10 +44,9 @@ func (s *server) handlerCreateChat(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matched, _ := regexp.Match(`^[a-zA-Z0-9а-яА-Я_]{4,20}$`, []byte(parsedChat.Name))
-
-	if !matched {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("invalid chat name characters. Actually: %s", parsedChat.Name))
+	if err := parsedChat.VaildateChatData(); err != nil {
+		s.ErrorLog(r, err)
+		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal error while creating chat"))
 		return
 	}
 
@@ -66,18 +69,9 @@ func (s *server) handlerSendMessage(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if parsedMessage.Chat <= 0 {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("chatID is not valid. Actually: %v", parsedMessage.Chat))
-		return
-	}
-
-	if parsedMessage.Author <= 0 {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("author is not valid. Actually: %v", parsedMessage.Author))
-		return
-	}
-
-	if len(parsedMessage.Text) == 0 {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("message text cannot be empty"))
+	if err := parsedMessage.ValidateMessageData(); err != nil {
+		s.ErrorLog(r, err)
+		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal server error while creating message"))
 		return
 	}
 
@@ -93,7 +87,6 @@ func (s *server) handlerSendMessage(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handlerGetUserListOfChats(rw http.ResponseWriter, r *http.Request) {
-
 	parsedUser := &user.ChatUser{}
 
 	if err := json.NewDecoder(r.Body).Decode(&parsedUser); err != nil {
@@ -101,8 +94,9 @@ func (s *server) handlerGetUserListOfChats(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if parsedUser.ID < 0 {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("user is not valid. Actually: %v", parsedUser.ID))
+	if err := parsedUser.ValidateUserID(); err != nil {
+		s.ErrorLog(r, err)
+		s.error(rw, r, http.StatusBadRequest, err)
 		return
 	}
 

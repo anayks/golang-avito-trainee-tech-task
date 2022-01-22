@@ -1,9 +1,9 @@
 package ChatEntity
 
 import (
+	"fmt"
+	"regexp"
 	"time"
-
-	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
 )
 
 type Chat struct {
@@ -13,10 +13,19 @@ type Chat struct {
 	Created_at time.Time `json:"created_at"`
 }
 
-func GetUserChatList(userID int64) (ChatsList []Chat) {
-	return ChatsList
-}
+func (chat *Chat) VaildateChatData() error {
+	if chat.ID < 0 {
+		return fmt.Errorf("chat ID is not valid")
+	}
 
-func GetMessageList(chatID int64) (MessagesList []ChatMessage.Message) {
-	return MessagesList
+	matched, err := regexp.Match(`^[a-zA-Z0-9а-яА-Я_]{4,20}$`, []byte(chat.Name))
+	if err != nil {
+		return err
+	}
+
+	if !matched {
+		return fmt.Errorf("invalid chat name characters. Actually: %s", chat.Name)
+	}
+
+	return nil
 }

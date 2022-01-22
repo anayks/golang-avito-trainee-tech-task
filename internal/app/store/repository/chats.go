@@ -89,16 +89,22 @@ func (r RepositoryChats) GetUserChats(user *ChatUser.ChatUser) (chatsList string
 				) 
 			GROUP BY 
 				chatsUsers.chat_id
-		) 
+		),
+        lastMessages AS(
+        	SELECT distinct max(created_at), chat_id FROM messages WHERE chat_id IN (SELECT chat_id from res) GROUP BY chat_id
+        )
 		SELECT 
-			chat_id, 
+			chatRelatives.chat_id, 
 			users, 
 			chatname, 
-			created_at 
+			created_at,
+            max AS lastMessage
 		from 
 			chatRelatives 
 			INNER JOIN res ON chatRelatives.chat_id = res.res_id
-		`, user.ID)
+      INNER JOIN lastMessages ON chatRelatives.chat_id = lastMessages.chat_id
+    ORDER BY 
+			lastMessage DESC`, user.ID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
