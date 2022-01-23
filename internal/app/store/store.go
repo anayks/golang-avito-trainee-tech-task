@@ -56,7 +56,7 @@ func Connect() (database *sql.DB) {
 
 func CheckError(err error) {
 	if err != nil {
-		fmt.Printf("mysql is not connected. Error reason: %v", err)
+		fmt.Printf("mysql is not connected. Error reason: %w", err)
 		panic(err)
 	}
 }

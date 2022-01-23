@@ -18,10 +18,10 @@ type RepositoryChats struct {
 func checkUserExistsWithTx(ctx context.Context, tx *sql.Tx, r RepositoryChats, chat_id int64, user_id int64) error {
 	_, err := tx.ExecContext(ctx, "INSERT into chatsUsers (chat_id, user_id) VALUES ($1, $2)", chat_id, user_id)
 
+	if err != nil && err == sql.ErrNoRows {
+		return nil
+	}
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
 		return err
 	}
 	return nil
@@ -49,7 +49,7 @@ func (r RepositoryChats) Create(ctx context.Context, chat *ChatEntity.Chat) (id 
 			continue
 		}
 
-		return 0, fmt.Errorf("(user_id %v) not exists", id)
+		return 0, fmt.Errorf("(user_id %w) not exists", id)
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -60,52 +60,48 @@ func (r RepositoryChats) Create(ctx context.Context, chat *ChatEntity.Chat) (id 
 }
 
 func (r RepositoryChats) GetUserChats(user *ChatUser.ChatUser) (chatsList string, err error) {
-	rows, err := r.store.db.Query(
-		`WITH t_user_chats AS (
-				SELECT 
-					chat_id 
-				FROM 
-					chatsUsers
-				WHERE
-					user_id = $1
-			)
+	rows, err := r.store.db.Query(`WITH t_user_chats AS (
 			SELECT 
-					chats.id AS id,
-					ARRAY_AGG(DISTINCT chatsUsers.user_id) users,
-					chats.chatname,
-					chats.created_at
+				chat_id 
 			FROM 
-					chatsUsers
-			JOIN t_user_chats ON t_user_chats.chat_id = chatsUsers.chat_id
-			JOIN chats ON chats.id = t_user_chats.chat_id
-			INNER JOIN
-					messages messages1
-			ON
-					messages1.chat_id = chatsUsers.chat_id 
-			AND
-					t_user_chats.chat_id = messages1.chat_id
-			AND
-					messages1.created_at = (
-						SELECT 
-							DISTINCT MAX(messages.created_at)
-						FROM 
-							messages
-						WHERE
-							messages.chat_id = t_user_chats.chat_id
-						)
-			GROUP BY
-					chats.id,
-					chats.chatname,
-					messages1.created_at,
-					t_user_chats.chat_id
-			ORDER BY 
-					messages1.created_at DESC`, user.ID)
+				chatsUsers
+			WHERE
+				user_id = $1
+		)
+		SELECT 
+				chats.id AS id,
+				ARRAY_AGG(DISTINCT chatsUsers.user_id) users,
+				chats.chatname,
+				chats.created_at
+		FROM 
+				chatsUsers
+		JOIN t_user_chats ON t_user_chats.chat_id = chatsUsers.chat_id
+		JOIN chats ON chats.id = t_user_chats.chat_id
+		INNER JOIN
+				messages messages1
+		ON
+				messages1.chat_id = chatsUsers.chat_id 
+		AND
+				t_user_chats.chat_id = messages1.chat_id
+		AND
+				messages1.created_at = (
+					SELECT 
+						DISTINCT MAX(messages.created_at)
+					FROM 
+						messages
+					WHERE
+						messages.chat_id = t_user_chats.chat_id
+					)
+		GROUP BY
+				chats.id,
+				chats.chatname,
+				messages1.created_at,
+				t_user_chats.chat_id
+		ORDER BY 
+				messages1.created_at DESC`, user.ID)
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return chatsList, fmt.Errorf("user from id %v is not in some chat", user.ID)
-		}
-		return chatsList, err
+	if err != nil && err == sql.ErrNoRows {
+		return chatsList, fmt.Errorf("user from id %v is not in some chat", user.ID)
 	}
 
 	defer rows.Close()

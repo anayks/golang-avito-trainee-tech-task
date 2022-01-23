@@ -25,7 +25,7 @@ func (s *server) handleAddUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.store.Users().Create(parsedUser)
+	id, err := s.store.RepositoryUsers.Create(parsedUser)
 
 	if err != nil {
 		s.ErrorLog(r, err)
@@ -40,21 +40,21 @@ func (s *server) handlerCreateChat(rw http.ResponseWriter, r *http.Request) {
 	parsedChat := &ChatEntity.Chat{}
 
 	if err := json.NewDecoder(r.Body).Decode(&parsedChat); err != nil {
-		s.error(rw, r, http.StatusUnprocessableEntity, err)
+		s.error(rw, r, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := parsedChat.VaildateChatData(); err != nil {
 		s.ErrorLog(r, err)
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal error while creating chat"))
+		s.error(rw, r, http.StatusBadRequest, fmt.Errorf("internal error while creating chat"))
 		return
 	}
 
-	id, err := s.store.Chats().Create(r.Context(), parsedChat)
+	id, err := s.store.RepositoryChats.Create(r.Context(), parsedChat)
 
 	if err != nil {
 		s.ErrorLog(r, err)
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal error while creating chat"))
+		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal error while creating chat"))
 		return
 	}
 
@@ -65,21 +65,21 @@ func (s *server) handlerSendMessage(rw http.ResponseWriter, r *http.Request) {
 	parsedMessage := &ChatMessage.Message{}
 
 	if err := json.NewDecoder(r.Body).Decode(&parsedMessage); err != nil {
-		s.error(rw, r, http.StatusUnprocessableEntity, err)
+		s.error(rw, r, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := parsedMessage.ValidateMessageData(); err != nil {
 		s.ErrorLog(r, err)
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal server error while creating message"))
+		s.error(rw, r, http.StatusBadRequest, fmt.Errorf("internal server error while creating message"))
 		return
 	}
 
-	id, err := s.store.Messages().Create(r.Context(), parsedMessage)
+	id, err := s.store.RepositoryMessages.Create(r.Context(), parsedMessage)
 
 	if err != nil {
 		s.ErrorLog(r, err)
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal server error while creating message"))
+		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal server error while creating message"))
 		return
 	}
 
@@ -100,11 +100,11 @@ func (s *server) handlerGetUserListOfChats(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	result, err := s.store.Chats().GetUserChats(parsedUser)
+	result, err := s.store.RepositoryChats.GetUserChats(parsedUser)
 
 	if err != nil {
 		s.ErrorLog(r, err)
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("internal server error while getting user's chats"))
+		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal server error while getting user's chats"))
 		return
 	}
 
@@ -124,7 +124,7 @@ func (s *server) handlerGetChatMessages(rw http.ResponseWriter, r *http.Request)
 	}
 
 	if parsedChat.ID <= 0 {
-		s.error(rw, r, http.StatusUnprocessableEntity, fmt.Errorf("chat-id is not valid. Actually: %v", parsedChat.ID))
+		s.error(rw, r, http.StatusBadRequest, fmt.Errorf("chat-id is not valid. Actually: %v", parsedChat.ID))
 		return
 	}
 
@@ -132,17 +132,17 @@ func (s *server) handlerGetChatMessages(rw http.ResponseWriter, r *http.Request)
 		ID: parsedChat.ID,
 	}
 
-	result, err := s.store.Messages().GetChatMessages(chatEntity)
+	result, err := s.store.RepositoryMessages.GetChatMessages(chatEntity)
+
+	if err != nil && err == sql.ErrNoRows {
+		s.ErrorLog(r, err)
+		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("messages not found"))
+		return
+	}
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			s.ErrorLog(r, err)
-			s.error(rw, r, http.StatusNotFound, fmt.Errorf("messages not found"))
-			return
-		}
-
 		s.ErrorLog(r, err)
-		s.error(rw, r, http.StatusNotFound, fmt.Errorf("internal server error while getting user's chats"))
+		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal server error while getting user's chats"))
 		return
 	}
 
