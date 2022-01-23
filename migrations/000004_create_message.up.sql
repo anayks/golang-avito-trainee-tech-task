@@ -3,6 +3,6 @@ CREATE TABLE messages (
 	user_id BIGINT NOT NULL,
 	chat_id BIGINT NOT NULL,
 	text VARCHAR NOT NULL,
-	CONSTRAINT messages_user_chatID FOREIGN KEY(chat_id) REFERENCES users(id) ON DELETE CASCADE,
+	CONSTRAINT messages_user_chatID FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
 	CONSTRAINT messages_chat FOREIGN KEY(chat_id) REFERENCES chats(id) ON DELETE CASCADE
 );

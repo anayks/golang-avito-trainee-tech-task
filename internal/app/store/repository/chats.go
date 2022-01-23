@@ -61,45 +61,45 @@ func (r RepositoryChats) Create(ctx context.Context, chat *ChatEntity.Chat) (id 
 
 func (r RepositoryChats) GetUserChats(user *ChatUser.ChatUser) (chatsList string, err error) {
 	rows, err := r.store.db.Query(
-		`with t_user_chats as (
-			SELECT 
-				chat_id 
-			from 
-				chatsUsers
-			WHERE
-				user_id = $1
-		)
-		SELECT 
-			chats.id as id,
-			array_agg(DISTINCT chatsUsers.user_id) users
-			chats.chatname,
-			chats.created_at,
-		FROM 
-			chatsUsers
-		JOIN t_user_chats ON t_user_chats.chat_id = chatsUsers.chat_id
-		JOIN chats ON chats.id = t_user_chats.chat_id
-    INNER JOIN
-      messages messages1
-    ON
-      messages1.chat_id = chatsUsers.chat_id 
-    AND
-      t_user_chats.chat_id = messages1.chat_id
-    AND
-      messages1.created_at = (
+		`WITH t_user_chats AS (
 				SELECT 
-					DISTINCT MAX(messages.created_at)
+					chat_id 
 				FROM 
-					messages
+					chatsUsers
 				WHERE
-					messages.chat_id = t_user_chats.chat_id
+					user_id = $1
 			)
-		GROUP BY
-			chats.id,
-			chats.chatname,
-			messages1.created_at,
-			t_user_chats.chat_id
-		ORDER BY 
-			messages1.created_at DESC`, user.ID)
+			SELECT 
+					chats.id AS id,
+					ARRAY_AGG(DISTINCT chatsUsers.user_id) users,
+					chats.chatname,
+					chats.created_at
+			FROM 
+					chatsUsers
+			JOIN t_user_chats ON t_user_chats.chat_id = chatsUsers.chat_id
+			JOIN chats ON chats.id = t_user_chats.chat_id
+			INNER JOIN
+					messages messages1
+			ON
+					messages1.chat_id = chatsUsers.chat_id 
+			AND
+					t_user_chats.chat_id = messages1.chat_id
+			AND
+					messages1.created_at = (
+						SELECT 
+							DISTINCT MAX(messages.created_at)
+						FROM 
+							messages
+						WHERE
+							messages.chat_id = t_user_chats.chat_id
+						)
+			GROUP BY
+					chats.id,
+					chats.chatname,
+					messages1.created_at,
+					t_user_chats.chat_id
+			ORDER BY 
+					messages1.created_at DESC`, user.ID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
