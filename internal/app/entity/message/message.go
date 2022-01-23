@@ -1,4 +1,4 @@
-package ChatMessage
+package chatMessage
 
 import "fmt"
 

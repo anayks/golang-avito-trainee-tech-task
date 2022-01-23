@@ -6,22 +6,28 @@ import (
 	"encoding/json"
 	"fmt"
 
-	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
-	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
+	chatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
+	chatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
 )
 
 type RepositoryMessages struct {
 	store *Store
 }
 
-func (r RepositoryMessages) Create(ctx context.Context, message *ChatMessage.Message) (id int64, err error) {
+const (
+	querySelectUserLinks = "SELECT id from chatsUsers WHERE user_id = $1 and chat_id = $2"
+	queryCreateMessage   = "INSERT into messages (user_id, chat_id, text) VALUES ($1, $2, $3) RETURNING id"
+	queryGetChatMessages = "SELECT * FROM messages WHERE chat_id = $1"
+)
+
+func (r RepositoryMessages) Create(ctx context.Context, message *chatMessage.Message) (id int64, err error) {
 
 	tx, err := r.store.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 
-	result := int64(0)
+	var result int64
 
-	err = tx.QueryRowContext(ctx, "SELECT id from chatsUsers WHERE user_id = $1 and chat_id = $2", message.Author, message.Chat).Scan(&result)
+	err = tx.QueryRowContext(ctx, querySelectUserLinks, message.Author, message.Chat).Scan(&result)
 
 	if err != nil && err != sql.ErrNoRows {
 		return 0, fmt.Errorf("user or chat not found")
@@ -31,7 +37,7 @@ func (r RepositoryMessages) Create(ctx context.Context, message *ChatMessage.Mes
 		return 0, err
 	}
 
-	err = tx.QueryRowContext(ctx, "INSERT into messages (user_id, chat_id, text) VALUES ($1, $2, $3) RETURNING id", message.Author, message.Chat, message.Text).Scan(&id)
+	err = tx.QueryRowContext(ctx, queryCreateMessage, message.Author, message.Chat, message.Text).Scan(&id)
 
 	if err != nil {
 		return 0, fmt.Errorf("internal server error while creating message: %w", err)
@@ -44,8 +50,10 @@ func (r RepositoryMessages) Create(ctx context.Context, message *ChatMessage.Mes
 	return id, nil
 }
 
-func (r RepositoryMessages) GetChatMessages(chat *ChatEntity.Chat) (result string, err error) {
-	queryResult, err := r.store.db.Query("SELECT * FROM messages WHERE chat_id = $1", chat.ID)
+func (r RepositoryMessages) GetChatMessages(chat *chatEntity.Chat) (string, error) {
+	var result string
+
+	queryResult, err := r.store.db.Query(queryGetChatMessages, chat.ID)
 
 	if err != nil {
 		return "", err
@@ -53,10 +61,10 @@ func (r RepositoryMessages) GetChatMessages(chat *ChatEntity.Chat) (result strin
 
 	defer queryResult.Close()
 
-	var arrayResult []ChatMessage.Message
+	var arrayResult []chatMessage.Message
 
 	for queryResult.Next() {
-		queryItem := &ChatMessage.Message{}
+		queryItem := &chatMessage.Message{}
 
 		if err := queryResult.Scan(&queryItem.ID, &queryItem.Author, &queryItem.Chat, &queryItem.Text, &queryItem.Created_at); err != nil {
 			bytesResult, err := json.Marshal(arrayResult)
@@ -64,9 +72,7 @@ func (r RepositoryMessages) GetChatMessages(chat *ChatEntity.Chat) (result strin
 				return result, err
 			}
 
-			result = string(bytesResult)
-
-			return result, nil
+			return string(bytesResult), nil
 		}
 
 		arrayResult = append(arrayResult, *queryItem)
@@ -82,7 +88,5 @@ func (r RepositoryMessages) GetChatMessages(chat *ChatEntity.Chat) (result strin
 		return result, err
 	}
 
-	result = string(bytesResult)
-
-	return result, nil
+	return string(bytesResult), nil
 }

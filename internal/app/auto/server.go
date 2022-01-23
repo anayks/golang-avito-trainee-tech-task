@@ -1,7 +1,6 @@
 package auto
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/handlers"
@@ -37,8 +36,8 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/users/add", s.handleAddUser).Methods("POST")
 	s.router.HandleFunc("/chats/add", s.handlerCreateChat).Methods("POST")
 	s.router.HandleFunc("/messages/add", s.handlerSendMessage).Methods("POST")
-	s.router.HandleFunc("/messages/get", s.handlerGetChatMessages).Methods("POST")
-	s.router.HandleFunc("/chats/get", s.handlerGetUserListOfChats).Methods("POST")
+	s.router.HandleFunc("/messages/get", s.handlerGetChatMessages()).Methods("POST")
+	s.router.HandleFunc("/chats/get", s.handlerGetUserListOfChats()).Methods("POST")
 }
 
 func newServer(store *store.Store) (s *server) {
@@ -54,10 +53,10 @@ func newServer(store *store.Store) (s *server) {
 func StartServer() {
 
 	db := db.Connect()
+	defer db.Close()
 	sqlstore := store.New(db)
 	server := newServer(sqlstore)
 
-	fmt.Println("Server started at 9000 port!")
+	server.logger.Println("Server started at 9000 port!")
 	http.ListenAndServe(":9000", server)
-	defer db.Close()
 }

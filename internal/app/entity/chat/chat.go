@@ -1,4 +1,4 @@
-package ChatEntity
+package chatEntity
 
 import (
 	"fmt"

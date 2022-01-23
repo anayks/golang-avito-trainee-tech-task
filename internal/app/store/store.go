@@ -3,33 +3,26 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
-	ChatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
-	ChatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
-	ChatUser "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/user"
+	chatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
+	chatMessage "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/message"
+	chatUser "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/user"
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "db"
-	port     = 5432
-	user     = "postgres"
-	password = "HEYO"
-	dbname   = "postgres"
-)
-
 type RepositoryUsers interface {
-	Create(*ChatUser.ChatUser) int
+	Create(*chatUser.ChatUser) int
 }
 
 type RepositoryChats interface {
-	Create(*ChatEntity.Chat) (int, error)
-	GetUserChats(*ChatUser.ChatUser) ([]ChatEntity.Chat, error)
+	Create(*chatEntity.Chat) (int, error)
+	GetUserChats(*chatUser.ChatUser) ([]chatEntity.Chat, error)
 }
 
 type RepositoryMessages interface {
-	Create(*ChatMessage.Message) (int, error)
-	GetChatMessages(*ChatEntity.Chat) (string, error)
+	Create(*chatMessage.Message) (int, error)
+	GetChatMessages(*chatEntity.Chat) (string, error)
 }
 
 type Store interface {
@@ -39,7 +32,13 @@ type Store interface {
 }
 
 func Connect() (database *sql.DB) {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	host := os.Getenv("DB_HOST")     // "db"
+	port := os.Getenv("DB_PORT")     // 5432
+	user := os.Getenv("DB_USER")     // "postgres"
+	password := os.Getenv("DB_PASS") // "HEYO"
+	dbname := os.Getenv("DB_NAME")   //"postgres"
+
+	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 	db, err := sql.Open("postgres", psqlconn)
 
@@ -56,7 +55,7 @@ func Connect() (database *sql.DB) {
 
 func CheckError(err error) {
 	if err != nil {
-		fmt.Printf("mysql is not connected. Error reason: %w", err)
+		fmt.Printf("mysql is not connected. Error reason: %v", err)
 		panic(err)
 	}
 }

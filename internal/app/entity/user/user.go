@@ -1,4 +1,4 @@
-package ChatUser
+package chatUser
 
 import (
 	"fmt"
