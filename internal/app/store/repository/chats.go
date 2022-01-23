@@ -61,50 +61,45 @@ func (r RepositoryChats) Create(ctx context.Context, chat *ChatEntity.Chat) (id 
 
 func (r RepositoryChats) GetUserChats(user *ChatUser.ChatUser) (chatsList string, err error) {
 	rows, err := r.store.db.Query(
-		`WITH res AS(
+		`with t_user_chats as (
 			SELECT 
-				chatsUsers.chat_id AS res_id, 
-				chats.chatname AS chatname, 
-				chats.created_at AS created_at 
-			FROM 
-				chats 
-				LEFT JOIN chatsUsers ON chats.id = chatsUsers.chat_id 
-			WHERE 
-				chatsUsers.user_id = $1 
-			ORDER BY 
-				user_id asc
-		), 
-		chatRelatives AS(
-			SELECT 
-				chat_id, 
-				array_agg(chatsUsers.user_id) users 
+				chat_id 
 			from 
-				chatsUsers 
-			WHERE 
-				chat_id IN (
-					SELECT 
-						res_id 
-					FROM 
-						res
-				) 
-			GROUP BY 
-				chatsUsers.chat_id
-		),
-        lastMessages AS(
-        	SELECT distinct max(created_at), chat_id FROM messages WHERE chat_id IN (SELECT chat_id from res) GROUP BY chat_id
-        )
+				chatsUsers
+			WHERE
+				user_id = $1
+		)
 		SELECT 
-			chatRelatives.chat_id, 
-			users, 
-			chatname, 
-			created_at,
-            max AS lastMessage
-		from 
-			chatRelatives 
-			INNER JOIN res ON chatRelatives.chat_id = res.res_id
-      INNER JOIN lastMessages ON chatRelatives.chat_id = lastMessages.chat_id
-    ORDER BY 
-			lastMessage DESC`, user.ID)
+			chats.id as id,
+			array_agg(DISTINCT chatsUsers.user_id) users
+			chats.chatname,
+			chats.created_at,
+		FROM 
+			chatsUsers
+		JOIN t_user_chats ON t_user_chats.chat_id = chatsUsers.chat_id
+		JOIN chats ON chats.id = t_user_chats.chat_id
+    INNER JOIN
+      messages messages1
+    ON
+      messages1.chat_id = chatsUsers.chat_id 
+    AND
+      t_user_chats.chat_id = messages1.chat_id
+    AND
+      messages1.created_at = (
+				SELECT 
+					DISTINCT MAX(messages.created_at)
+				FROM 
+					messages
+				WHERE
+					messages.chat_id = t_user_chats.chat_id
+			)
+		GROUP BY
+			chats.id,
+			chats.chatname,
+			messages1.created_at,
+			t_user_chats.chat_id
+		ORDER BY 
+			messages1.created_at DESC`, user.ID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
