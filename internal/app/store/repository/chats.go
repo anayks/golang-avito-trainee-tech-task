@@ -58,8 +58,10 @@ type RepositoryChats struct {
 	store *Store
 }
 
-func (r RepositoryChats) Create(ctx context.Context, chat *chatEntity.Chat) (id int64, err error) {
+func (r RepositoryChats) Create(ctx context.Context, chat *chatEntity.Chat) (int64, error) {
 	tx, err := r.store.db.BeginTx(ctx, nil)
+
+	var id int64
 
 	if err != nil {
 		return 0, err
