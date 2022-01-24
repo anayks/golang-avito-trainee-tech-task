@@ -1,9 +1,9 @@
 package main
 
 import (
-	auto "github.com/anayks/golang-avito-trainee-tech-task/internal/app/auto"
+	server "github.com/anayks/golang-avito-trainee-tech-task/internal/app/server"
 )
 
 func main() {
-	auto.StartServer()
+	server.StartServer()
 }
