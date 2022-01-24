@@ -4,7 +4,7 @@ test:
 
 .PHONY: build
 build:
-	./wait-for-postgres.sh db ./main
+	go build -v ./cmd/service
 
 .PHONY: wait
 wait:
@@ -14,7 +14,12 @@ wait:
 migrate_up:
 	migrate -database "postgres://postgres:HEYO@db/postgres?sslmode=disable" -path migrations up
 
+.PHONY: chmodfile
+chmodfile:
+	chmod +x ./wait-for-postgres.sh
+
 .PHONY: run
-run: wait migrate_up build  
+run: chmodfile wait migrate_up build
+	./service
 
 .DEFAULT_GOAL := build

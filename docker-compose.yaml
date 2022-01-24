@@ -2,15 +2,19 @@ version: '3.8'
 
 services:
   test: 
-    build: ./
+    build:
+      context:
+        ./cmd/service
     command: make run
+    volumes:
+      - "./:/go/src/golang-avito-tech-test"
     ports:
       - 9000:9000
     depends_on:
       - db
     environment:
-      - DB_PASS=HEYO
       - DB_HOST=db
+      - DB_PASS=HEYO
       - DB_USER=postgres
       - DB_PORT=5432
       - DB_NAME=postgres

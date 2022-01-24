@@ -20,11 +20,16 @@ const (
 	queryGetChatMessages = "SELECT * FROM messages WHERE chat_id = $1"
 )
 
-func (r RepositoryMessages) Create(ctx context.Context, message *chatMessage.Message) (id int64, err error) {
+func (r RepositoryMessages) Create(ctx context.Context, message *chatMessage.Message) (int64, error) {
 
 	tx, err := r.store.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 
+	if err != nil {
+		return 0, err
+	}
+
+	var id int64
 	var result int64
 
 	err = tx.QueryRowContext(ctx, querySelectUserLinks, message.Author, message.Chat).Scan(&result)
