@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	chatEntity "github.com/anayks/golang-avito-trainee-tech-task/internal/app/entity/chat"
@@ -58,50 +57,50 @@ type RepositoryChats struct {
 	store *Store
 }
 
-func (r RepositoryChats) Create(ctx context.Context, chat *chatEntity.Chat) (int64, error) {
+func (r RepositoryChats) Create(ctx context.Context, chat *chatEntity.Chat) (newChat *chatEntity.Chat, err error) {
 	tx, err := r.store.db.BeginTx(ctx, nil)
-
-	var id int64
-
-	if err != nil {
-		return 0, err
-	}
-
 	defer tx.Rollback()
 
-	err = tx.QueryRowContext(ctx, "INSERT into chats (chatname) VALUES ($1) RETURNING id", chat.Name).Scan(&id)
-
-	if err != nil && err == sql.ErrNoRows {
-		return 0, fmt.Errorf("inserting chat went wrong: %w", err)
+	newChat = &chatEntity.Chat{
+		Users: chat.Users,
+		Name:  chat.Name,
 	}
 
 	if err != nil {
-		return 0, err
+		return newChat, err
+	}
+
+	err = tx.QueryRowContext(ctx, "INSERT into chats (chatname) VALUES ($1) RETURNING id", chat.Name).Scan(&newChat.ID)
+
+	if err != nil && err == sql.ErrNoRows {
+		return newChat, fmt.Errorf("inserting chat went wrong: %w", err)
+	}
+
+	if err != nil {
+		return newChat, err
 	}
 
 	for _, val := range chat.Users {
-		err := CreateChatUserLinksTx(ctx, tx, r, id, val)
+		err := CreateChatUserLinksTx(ctx, tx, r, newChat.ID, val)
 		if err == nil {
 			continue
 		}
 
-		return 0, fmt.Errorf("(user_id %v) not exists", id)
+		return newChat, fmt.Errorf("(chat_id %v) not exists and error: %w", newChat.ID, err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return 0, err
+		return newChat, err
 	}
 
-	return id, nil
+	return newChat, nil
 }
 
-func (r RepositoryChats) GetUserChats(user *chatUser.ChatUser) (string, error) {
+func (r RepositoryChats) GetUserChats(user *chatUser.ChatUser) ([]chatEntity.Chat, error) {
 	rows, err := r.store.db.Query(querySelectAllChatInfo, user.ID)
 
-	var chatsList string
-
 	if err != nil && err == sql.ErrNoRows {
-		return chatsList, fmt.Errorf("user from id %v is not in some chat", user.ID)
+		return nil, fmt.Errorf("user from id %v is not in some chat", user.ID)
 	}
 
 	defer rows.Close()
@@ -112,18 +111,12 @@ func (r RepositoryChats) GetUserChats(user *chatUser.ChatUser) (string, error) {
 		chatResult := &chatEntity.Chat{}
 
 		if err := rows.Scan(&chatResult.ID, pq.Array(&chatResult.Users), &chatResult.Name, &chatResult.Created_at); err != nil {
-			return chatsList, err
+			return nil, err
 		}
 		resultArray = append(resultArray, *chatResult)
 	}
 
-	byteResult, err := json.Marshal(resultArray)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(byteResult), nil
+	return resultArray, nil
 }
 
 func CreateChatUserLinksTx(ctx context.Context, tx *sql.Tx, r RepositoryChats, chat_id int64, user_id int64) error {

@@ -11,18 +11,19 @@ type RepositoryUsers struct {
 }
 
 const (
-	queryCreateUser = "INSERT into users (username) VALUES ($1) RETURNING id"
+	queryCreateUser = "INSERT into users (username) VALUES ($1) RETURNING id, created_at"
 )
 
-func (r RepositoryUsers) Create(user *chatUser.ChatUser) (int64, error) {
-
-	var id int64
-
-	err := r.store.db.QueryRow(queryCreateUser, user.Username).Scan(&id)
-
-	if err != nil {
-		return 0, fmt.Errorf("error creating user: %w", err)
+func (r RepositoryUsers) Create(username string) (chatUser.ChatUser, error) {
+	chatUser := &chatUser.ChatUser{
+		Username: username,
 	}
 
-	return id, nil
+	err := r.store.db.QueryRow(queryCreateUser, username).Scan(&chatUser.ID, &chatUser.Created_at)
+
+	if err != nil {
+		return *chatUser, fmt.Errorf("error creating user: %w", err)
+	}
+
+	return *chatUser, nil
 }

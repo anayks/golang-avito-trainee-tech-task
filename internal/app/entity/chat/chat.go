@@ -13,12 +13,9 @@ type Chat struct {
 	Created_at time.Time `json:"created_at"`
 }
 
-func (chat *Chat) VaildateChatData() error {
-	if chat.ID < 0 {
-		return fmt.Errorf("chat ID is not valid")
-	}
+func (chat *Chat) ValidateChatData() error {
 
-	matched, err := regexp.Match(`^[a-zA-Z0-9а-яА-Я_]{4,20}$`, []byte(chat.Name))
+	matched, err := regexp.Match(`^[a-zA-Z0-9а-яА-Я_ё]{4,20}$`, []byte(chat.Name))
 	if err != nil {
 		return err
 	}

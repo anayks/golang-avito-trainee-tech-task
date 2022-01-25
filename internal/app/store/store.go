@@ -12,17 +12,17 @@ import (
 )
 
 type RepositoryUsers interface {
-	Create(*chatUser.ChatUser) int
+	Create(*chatUser.ChatUser) (*chatUser.ChatUser, error)
 }
 
 type RepositoryChats interface {
-	Create(*chatEntity.Chat) (int, error)
+	Create(*chatEntity.Chat) (*chatEntity.Chat, error)
 	GetUserChats(*chatUser.ChatUser) ([]chatEntity.Chat, error)
 }
 
 type RepositoryMessages interface {
-	Create(*chatMessage.Message) (int, error)
-	GetChatMessages(*chatEntity.Chat) (string, error)
+	Create(*chatMessage.Message) (*chatMessage.Message, error)
+	GetChatMessages(*chatEntity.Chat) ([]chatMessage.Message, error)
 }
 
 type Store interface {

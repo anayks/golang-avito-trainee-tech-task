@@ -33,6 +33,9 @@ func (s *server) configureRouter() {
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 	s.router.Use(s.accessLogMiddleware)
 	s.router.Use(s.panicMiddleware)
+	s.router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		s.respond(w, r, http.StatusOK, map[string]bool{"ok": true})
+	})
 	s.router.HandleFunc("/users/add", s.handleAddUser).Methods("POST")
 	s.router.HandleFunc("/chats/add", s.handlerCreateChat).Methods("POST")
 	s.router.HandleFunc("/messages/add", s.handlerSendMessage).Methods("POST")
@@ -40,7 +43,7 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/chats/get", s.handlerGetUserListOfChats()).Methods("POST")
 }
 
-func newServer(store *store.Store) (s *server) {
+func NewServer(store *store.Store) (s *server) {
 	s = &server{
 		logger: logrus.New(),
 		router: mux.NewRouter(),
@@ -55,7 +58,7 @@ func StartServer() {
 	db := db.Connect()
 	defer db.Close()
 	sqlstore := store.New(db)
-	server := newServer(sqlstore)
+	server := NewServer(sqlstore)
 
 	server.logger.Println("Server started at 9000 port!")
 	http.ListenAndServe(":9000", server)

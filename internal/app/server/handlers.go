@@ -24,14 +24,23 @@ func (s *server) handleAddUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.store.RepositoryUsers.Create(parsedUser)
+	user, err := s.store.RepositoryUsers.Create(parsedUser.Username)
 
 	if err != nil {
 		s.error(rw, r, http.StatusInternalServerError, err)
 		return
 	}
 
-	s.respond(rw, r, http.StatusOK, id)
+	response, err := json.Marshal(map[string]interface{}{
+		"id": user.ID,
+	})
+
+	if err != nil {
+		s.error(rw, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	s.respond(rw, r, http.StatusOK, string(response))
 }
 
 func (s *server) handlerCreateChat(rw http.ResponseWriter, r *http.Request) {
@@ -42,19 +51,28 @@ func (s *server) handlerCreateChat(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := parsedChat.VaildateChatData(); err != nil {
+	if err := parsedChat.ValidateChatData(); err != nil {
 		s.error(rw, r, http.StatusBadRequest, fmt.Errorf("internal error while creating chat"))
 		return
 	}
 
-	id, err := s.store.RepositoryChats.Create(r.Context(), parsedChat)
+	chat, err := s.store.RepositoryChats.Create(r.Context(), parsedChat)
 
 	if err != nil {
 		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal error while creating chat"))
 		return
 	}
 
-	s.respond(rw, r, http.StatusOK, id)
+	response, err := json.Marshal(map[string]interface{}{
+		"id": chat.ID,
+	})
+
+	if err != nil {
+		s.error(rw, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	s.respond(rw, r, http.StatusOK, string(response))
 }
 
 func (s *server) handlerSendMessage(rw http.ResponseWriter, r *http.Request) {
@@ -70,14 +88,23 @@ func (s *server) handlerSendMessage(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.store.RepositoryMessages.Create(r.Context(), parsedMessage)
+	message, err := s.store.RepositoryMessages.Create(r.Context(), parsedMessage)
 
 	if err != nil {
 		s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal server error while creating message"))
 		return
 	}
 
-	s.respond(rw, r, http.StatusOK, id)
+	response, err := json.Marshal(map[string]interface{}{
+		"id": message.ID,
+	})
+
+	if err != nil {
+		s.error(rw, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	s.respond(rw, r, http.StatusOK, string(response))
 }
 
 func (s *server) handlerGetUserListOfChats() http.HandlerFunc {
@@ -101,7 +128,14 @@ func (s *server) handlerGetUserListOfChats() http.HandlerFunc {
 			return
 		}
 
-		s.respond(rw, r, http.StatusOK, result)
+		jsonResult, err := json.Marshal(result)
+
+		if err != nil {
+			s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal server error while parsing user's chats"))
+			return
+		}
+
+		s.respond(rw, r, http.StatusOK, string(jsonResult))
 	}
 }
 
@@ -139,6 +173,13 @@ func (s *server) handlerGetChatMessages() http.HandlerFunc {
 			return
 		}
 
-		s.respond(rw, r, http.StatusOK, result)
+		jsonResult, err := json.Marshal(result)
+
+		if err != nil {
+			s.error(rw, r, http.StatusInternalServerError, fmt.Errorf("internal server error while parsing user's chats"))
+			return
+		}
+
+		s.respond(rw, r, http.StatusOK, string(jsonResult))
 	}
 }

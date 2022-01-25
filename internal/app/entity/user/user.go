@@ -13,7 +13,7 @@ type ChatUser struct {
 }
 
 func (user ChatUser) ValidateUserName() error {
-	matched, err := regexp.Match(`^[a-zA-Z0-9а-яА-Я_]{4,20}$`, []byte(user.Username))
+	matched, err := regexp.Match(`^[a-zA-Z0-9а-яА-Я_ё]{4,20}$`, []byte(user.Username))
 
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (user ChatUser) ValidateUserName() error {
 }
 
 func (user ChatUser) ValidateUserID() error {
-	if user.ID < 0 {
+	if user.ID <= 0 {
 		return fmt.Errorf("user is not valid. Actually: %v", user.ID)
 	}
 	return nil
