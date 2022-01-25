@@ -16,7 +16,7 @@
 ## Запуск приложения:
 
 ```
-	docker-compose up
+docker-compose up
 ```
 
 Приложение будет доступно на порту 9000
@@ -30,7 +30,7 @@
 Запрос:
 
 ```bash
-	curl --header "Content-Type: application/json" \
+curl --header "Content-Type: application/json" \
   --request POST \
   --data '{"username": "user_1"}' \
   http://localhost:9000/users/add
