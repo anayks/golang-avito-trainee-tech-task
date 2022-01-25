@@ -109,4 +109,4 @@ curl --header "Content-Type: application/json" \
 - [ ] Проведено нагрузочное тестирование с целью понять, какую нагрузку на чтение может выдержать наш сервис
 
 ## References
-(Задание)(https://github.com/avito-tech/auto-backend-trainee-assignment)
+[Задание](https://github.com/avito-tech/auto-backend-trainee-assignment)
